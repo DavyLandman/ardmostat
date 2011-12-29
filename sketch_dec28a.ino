@@ -1,5 +1,13 @@
 #include <math.h>
 #include <EtherCard.h>
+#define StateMachineAction void*
+#define Action(a) reinterpret_cast<void*>(a)
+#define CallAction(a) reinterpret_cast<action>(a)()
+typedef void* (*action)();
+
+
+
+
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static byte tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
@@ -16,6 +24,56 @@ double Thermister(int RawADC) {
 
 byte Ethernet::buffer[700];
 
+
+static int longDelay = 1;
+static int dataSend = 0;
+static int sendingStarted = 0;
+static int roundLoopTime = 10*1000;
+static int roundTime = 0;
+
+static StateMachineAction waitingForNextRound() {
+  if (roundTime < millis()) {
+    roundTime += roundLoopTime;
+    return Action(sendingTemperature);
+  }
+  return Action(waitingForNextRound);
+}
+
+
+static word sendTemperatureFillRequest(byte fd) {
+  dataSend = 1;
+  BufferFiller bfill = ether.tcpOffset();
+  double temp = Thermister(analogRead(0));
+  bfill.emit_raw(reinterpret_cast<char*>(&temp), sizeof temp); 
+  return bfill.position();
+}
+
+static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, word len_of_data) {
+  dataSend = 1;
+  return 0;
+}
+
+static StateMachineAction sendingTemperature() {
+  if (sendingStarted == 0) {
+    sendingStarted = millis();
+    dataSend = 0;
+    ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
+  } 
+  else if (dataSend) {
+    sendingStarted = 0;
+    return Action(waitingForNextRound);
+  } 
+  else if ((millis() - sendingStarted) > 2000) {
+    // something went wrong with sending.. lets consider this one failed
+    Serial.println("Sending failure assumed");
+    sendingStarted = 0;
+    return Action(waitingForNextRound);
+  }
+  longDelay = 0;
+  ether.packetLoop(ether.packetReceive());
+  return Action(sendingTemperature); 
+}
+
 void setup() {
   Serial.begin(57600);
   Serial.println("\n[Starting temp logger]");
@@ -31,52 +89,18 @@ void setup() {
     Serial.println("DNS failed");
   ether.printIp("Server: ", ether.hisip);
   ether.hisport = 5555;
-
+  roundTime = millis();
 }
 
+static StateMachineAction currentState = Action(waitingForNextRound);
 
-static word fillTemperatureData(byte fd) {
-  Serial.println("got fill request");
-  BufferFiller bfill = ether.tcpOffset();
-  double temp = Thermister(analogRead(0));
-  bfill.emit_raw(reinterpret_cast<char*>(&temp), sizeof temp); 
-  return bfill.position();
-}
-
-static int done = 1;
-static byte resultFromTemperatureSend(byte fd, byte statuscode, word datapos, word len_of_data) {
- Serial.println("got result request: ");
- Serial.println((int) statuscode);
-  Serial.println((int) len_of_data);
-  Serial.println((int)(((byte*) Ethernet::buffer + datapos)[1]));
- done = 1;
-  return 0; 
-}
 
 void loop() {
   if (ether.dhcpExpired() && !ether.dhcpSetup())
     Serial.println("DHCP failed");  
-  word len = ether.packetReceive();
-  word pos = ether.packetLoop(len);
-  // check if valid tcp data is received
- /* if (pos) {  
-    Serial.println("got data:" + len);
-     BufferFiller bfill = ether.tcpOffset();
-     char* data = (char *) Ethernet::buffer + pos; 
-     if (*data == 0x11) {
-      Serial.println("correct welcome");     
-       // correct welcome
-       ether.clientTcpReq(resultFromTemperatureSend, fillTemperatureData, 5050); 
-     }
-  } else {
-      Serial.println("got no data:");
-  }*/
-
-//  Serial.println(int(Thermister(analogRead(0))));  // display Fahrenheit
-  if ((millis() % 30000) == 0) {
-//      delay(5000);
-//      done = 0;
-      ether.clientTcpReq(resultFromTemperatureSend, fillTemperatureData, 5555); 
-      delay(1);
+  longDelay = 1;
+  currentState = CallAction(currentState);
+  if (longDelay) {
+    delay(1000); 
   }
 }
