@@ -28,7 +28,7 @@ byte Ethernet::buffer[700];
 static int longDelay = 1;
 static int dataSend = 0;
 static int sendingStarted = 0;
-static int roundLoopTime = 10*1000;
+static int roundLoopTime = 5*60*1000;
 static int roundTime = 0;
 
 static StateMachineAction waitingForNextRound() {
@@ -57,32 +57,39 @@ static StateMachineAction sendingTemperature() {
   if (sendingStarted == 0) {
     sendingStarted = millis();
     dataSend = 0;
+    ether.powerUp();
+    initEther();
     ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
   } 
   else if (dataSend) {
     sendingStarted = 0;
+    ether.powerDown();
     return Action(waitingForNextRound);
   } 
   else if ((millis() - sendingStarted) > 2000) {
     // something went wrong with sending.. lets consider this one failed
     Serial.println("Sending failure assumed");
     sendingStarted = 0;
+    ether.powerDown();
     return Action(waitingForNextRound);
   }
   longDelay = 0;
   ether.packetLoop(ether.packetReceive());
   return Action(sendingTemperature); 
 }
-
-void setup() {
-  Serial.begin(57600);
-  Serial.println("\n[Starting temp logger]");
-  
+void initEther() {
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
     Serial.println( "Failed to access Ethernet controller");
 
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
+}
+
+void setup() {
+  Serial.begin(57600);
+  Serial.println("\n[Starting temp logger]");
+
+  initEther();
     
   ether.printIp("IP: ", ether.myip);
    if (!ether.dnsLookup(servername))
