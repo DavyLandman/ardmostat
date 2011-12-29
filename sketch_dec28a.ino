@@ -45,7 +45,10 @@ static word fillTemperatureData(byte fd) {
 
 static int done = 1;
 static byte resultFromTemperatureSend(byte fd, byte statuscode, word datapos, word len_of_data) {
- Serial.println("got result request");  
+ Serial.println("got result request: ");
+ Serial.println((int) statuscode);
+  Serial.println((int) len_of_data);
+  Serial.println((int)(((byte*) Ethernet::buffer + datapos)[1]));
  done = 1;
   return 0; 
 }
@@ -70,9 +73,10 @@ void loop() {
   }*/
 
 //  Serial.println(int(Thermister(analogRead(0))));  // display Fahrenheit
-  if (done) {
-      delay(5000);
-      done = 0;
+  if ((millis() % 30000) == 0) {
+//      delay(5000);
+//      done = 0;
       ether.clientTcpReq(resultFromTemperatureSend, fillTemperatureData, 5555); 
+      delay(1);
   }
 }
