@@ -1,0 +1,3 @@
+[submodule "Arduino/libraries/ethercard"]
+	path = Arduino/libraries/ethercard
+	url = git://github.com/jcw/ethercard.git
