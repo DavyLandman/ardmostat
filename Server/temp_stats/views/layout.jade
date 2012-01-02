@@ -1,28 +1,29 @@
 !!! 5
 html
-  head
-    title= title
-    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
-    link(rel='stylesheet', href='/stylesheets/style.css')
-  body
-    .topbar
-      .fill
-        .container
-          a(href='#').brand ArdMostat
-          ul.nav
-            li 
-              a Temperature
-            li
-              a Schedule
+	head
+		title= title
+		link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+		link(rel='stylesheet', href='/stylesheets/style.css')
+		script(src='/javascripts/jquery-1.7.1.min.js')
+	body
+		.topbar
+			.fill
+				.container
+					a(href='#').brand ArdMostat
+					ul.nav
+						li 
+							a(href='#') Temperature
+						li
+							a(href='#') Schedule
 
-    .container
-      .content
-        .pageheader
-          h1=title
-        .row
-          .span10!= body
-          .span4
-            p stuff?
-      footer
-        p cheers
-  
+		.container
+			.content
+				.pageheader
+					h1=title
+				.row
+					.span10!= body
+					.span4
+						p stuff?
+			footer
+				p cheers
+	
