@@ -2,12 +2,27 @@
 html
   head
     title= title
-    link(rel='stylesheet', href='/stylesheets/normalize.css')
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
-    header
-      h1 Temperature stats!
-    section#wrapper!= body
-    footer
-      p Thanks for coming by
+    .topbar
+      .fill
+        .container
+          a(href='#').brand ArdMostat
+          ul.nav
+            li 
+              a Temperature
+            li
+              a Schedule
+
+    .container
+      .content
+        .pageheader
+          h1=title
+        .row
+          .span10!= body
+          .span4
+            p stuff?
+      footer
+        p cheers
   
