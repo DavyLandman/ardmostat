@@ -1,3 +1,6 @@
 [submodule "Arduino/libraries/ethercard"]
 	path = Arduino/libraries/ethercard
 	url = git://github.com/jcw/ethercard.git
+[submodule "Server/libraries/bootstrap"]
+	path = Server/libraries/bootstrap
+	url = https://github.com/twitter/bootstrap.git
