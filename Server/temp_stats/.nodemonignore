@@ -1,3 +1,4 @@
 /vendor/*     
 /public/*    
 *.css       
+*.swp
