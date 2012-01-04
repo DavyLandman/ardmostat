@@ -4,7 +4,6 @@ html
 		title= title
 		link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
 		link(rel='stylesheet', href='/stylesheets/style.css')
-		script(src='/javascripts/jquery-1.7.1.min.js')
 	body
 		.topbar
 			.fill
@@ -26,4 +25,7 @@ html
 						p stuff?
 			footer
 				p cheers
-	
+
+	script(src='/javascripts/jquery-1.7.1.min.js')
+	- if (typeof(pagescript) != 'undefined')
+		script(src=pagescript)

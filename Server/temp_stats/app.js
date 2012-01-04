@@ -17,6 +17,7 @@ app.configure(function(){
 	app.use(express.methodOverride());
 	app.use(require('stylus').middleware({ src: __dirname + '/public' }));
 	app.use(app.router);
+	app.use(express.bodyParser());
 	app.use(express.static(__dirname + '/public'));
 });
 
@@ -32,6 +33,7 @@ app.configure('production', function(){
 console.log(routes);
 app.get('/', routes.index);
 app.get('/Temperature', routes.temperature);
+app.get('/Temperature/Range/:start', routes.temperatureRange);
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
