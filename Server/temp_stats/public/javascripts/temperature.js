@@ -3,7 +3,5 @@ $("#updateTemperatureInfo").click(function (e) {
 	$.get("/Temperature/Range/" + new Date().toJSON(), function (data) {
 		alert(data.temp);
 	});
-
-
 	return false;
 });
