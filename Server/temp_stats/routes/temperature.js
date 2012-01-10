@@ -1,3 +1,17 @@
+var orm = require('orm');
+var Temp;
+var db = orm.connect('postgresql://node_temp:report@localhost/Thermostat', function( success, db) {
+	if (!success) {
+		console.log('Could not connect the database!\n\t%d:%s', db.number, db.message);
+		return;
+	}
+	Temp = db.define("temperature", {
+		"occurance":  { "type": "date" },
+		"temperature": { "type": "float"}
+	});
+	Temp.sync();
+});
+
 exports.init = function (app) {
 	app.get('/Temperature', function(req, res) {
 		res.render('temperature', { 
@@ -6,12 +20,32 @@ exports.init = function (app) {
 		});
 	});
 
-	app.get('/Temperature/Range/:start', function(req, res) {
+	app.get('/Temperature/Range/:start/:stop', function(req, res) {
 		if (req.xhr) {
-			res.json({
-				temp : 2132.20,
-				occur: new Date(req.params.start).toString()
-			});
+			if (typeof(Temp) == 'undefined') {
+				console.log("Temp orm object is not defined yet?");
+				res.send("Error with database connection", 500);
+			}
+			else {
+				Temp.find({ 
+						"occurance >" : new Date(req.params.start).toISOString(),
+						"occurance <" : new Date(req.params.stop).toISOString()
+					}, 
+					function (temps) {
+						if (temps != null) {
+							result = [];
+							for (var tIndex = 0; tIndex < temps.length; tIndex++) {
+								t = temps[tIndex];
+								result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
+							}
+							res.json(result);
+						}
+						else {
+							res.send("No temperatures found in this range");
+						}
+					}
+				);
+			}
 		} 
 		else {
 			res.send('This method is only intended for ajax calls', 500);
