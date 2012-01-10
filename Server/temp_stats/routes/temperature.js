@@ -16,7 +16,7 @@ exports.init = function (app) {
 	app.get('/Temperature', function(req, res) {
 		res.render('temperature', { 
 			title: 'Temperature information', 
-			pagescript: '/javascripts/temperature.js'
+			pagescript: ['/javascripts/temperature.js', '/javascripts/dygraph-combined.js']
 		});
 	});
 

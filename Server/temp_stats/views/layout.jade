@@ -28,5 +28,9 @@ html
 				p cheers
 
 	script(src='/javascripts/jquery-1.7.1.min.js')
-	- if (typeof(pagescript) != 'undefined')
+	- if (typeof(pagescript) != 'undefined' && typeof(pagescript) === 'string')
 		script(src=pagescript)
+	- else if (typeof(pagescript) != 'undefined')
+		- for (var i=0; i < pagescript.length; i++)
+			script(src=pagescript[i])
+
