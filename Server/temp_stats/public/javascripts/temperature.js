@@ -20,6 +20,8 @@ $("#updateTemperatureInfo").click(function (e) {
 $(function() {
 	graph = new Dygraph($("#tempGraph").get(0), [[new Date(),20]], {
 		drawPoints: true,
+		rollPeriod: 5,
+		showRoller: true,
 		labels: ['Temperature', 'Occurance']
 	});
 });
