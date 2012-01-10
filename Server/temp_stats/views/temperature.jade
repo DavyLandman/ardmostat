@@ -1,7 +1,14 @@
 p	
 	| On this page you can view the temperature history 
 	| of the past day, week, month, or year
-
-input(type="date", name="testdate")
+form
+	fieldset
+		.clearfix
+			label Date range 
+			.input
+				.inline-inputs
+					input(type="date",value="29 dec 2011", name="startDate")#startDate.small 
+					input(type="date",value="30 dec 2011",
+					name="stopDate")#stopDate.small 
 
 a(href="#", id="updateTemperatureInfo") Update the chart
