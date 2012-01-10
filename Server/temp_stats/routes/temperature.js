@@ -33,26 +33,25 @@ exports.init = function (app) {
 		if (typeof(Temp) == 'undefined') {
 			console.log("Temp orm object is not defined yet?");
 			res.send("Error with database connection", 500);
+			return;
 		}
-		else {
-			Temp.find({ 
-					"occurance >" : new Date(req.params.start).toISOString(),
-					"occurance <" : new Date(req.params.stop).toISOString()
-				}, 
-				function (temps) {
-					if (temps != null) {
-						result = [];
-						for (var tIndex = 0; tIndex < temps.length; tIndex++) {
-							t = temps[tIndex];
-							result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
-						}
-						res.json(result);
+		Temp.find({ 
+				"occurance >" : new Date(req.params.start).toISOString(),
+				"occurance <" : new Date(req.params.stop).toISOString()
+			}, 
+			function (temps) {
+				if (temps != null) {
+					result = [];
+					for (var tIndex = 0; tIndex < temps.length; tIndex++) {
+						t = temps[tIndex];
+						result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
 					}
-					else {
-						res.send("No temperatures found in this range");
-					}
+					res.json(result);
 				}
-			);
-		} 
+				else {
+					res.send("No temperatures found in this range");
+				}
+			}
+		);
 	});
 }
