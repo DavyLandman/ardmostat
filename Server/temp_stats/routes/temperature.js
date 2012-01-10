@@ -20,35 +20,39 @@ exports.init = function (app) {
 		});
 	});
 
-	app.get('/Temperature/Range/:start/:stop', function(req, res) {
+	function ajaxRequired(req, res, next) {
 		if (req.xhr) {
-			if (typeof(Temp) == 'undefined') {
-				console.log("Temp orm object is not defined yet?");
-				res.send("Error with database connection", 500);
-			}
-			else {
-				Temp.find({ 
-						"occurance >" : new Date(req.params.start).toISOString(),
-						"occurance <" : new Date(req.params.stop).toISOString()
-					}, 
-					function (temps) {
-						if (temps != null) {
-							result = [];
-							for (var tIndex = 0; tIndex < temps.length; tIndex++) {
-								t = temps[tIndex];
-								result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
-							}
-							res.json(result);
-						}
-						else {
-							res.send("No temperatures found in this range");
-						}
-					}
-				);
-			}
-		} 
+			next();
+		}
 		else {
 			res.send('This method is only intended for ajax calls', 500);
 		}
+	}
+
+	app.get('/Temperature/Range/:start/:stop', ajaxRequired, function(req, res) {
+		if (typeof(Temp) == 'undefined') {
+			console.log("Temp orm object is not defined yet?");
+			res.send("Error with database connection", 500);
+		}
+		else {
+			Temp.find({ 
+					"occurance >" : new Date(req.params.start).toISOString(),
+					"occurance <" : new Date(req.params.stop).toISOString()
+				}, 
+				function (temps) {
+					if (temps != null) {
+						result = [];
+						for (var tIndex = 0; tIndex < temps.length; tIndex++) {
+							t = temps[tIndex];
+							result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
+						}
+						res.json(result);
+					}
+					else {
+						res.send("No temperatures found in this range");
+					}
+				}
+			);
+		} 
 	});
 }
