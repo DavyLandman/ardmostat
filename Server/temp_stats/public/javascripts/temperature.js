@@ -1,5 +1,3 @@
-var graph;
-
 $("#updateTemperatureInfo").click(function (e) {
 	e.preventDefault();
 	$.get("/Temperature/Range/" + new Date(2011, 11, 30).toJSON() + "/"+ new Date(2011,11,31).toJSON(), function (data) {
@@ -18,6 +16,7 @@ $("#updateTemperatureInfo").click(function (e) {
 });
 
 
+var graph;
 function provideGraphData(data) {
 	if (typeof(graph) === 'undefined') {
 		initializeGraph(data);
