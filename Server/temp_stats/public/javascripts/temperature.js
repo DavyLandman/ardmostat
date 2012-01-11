@@ -11,17 +11,27 @@ $("#updateTemperatureInfo").click(function (e) {
 			for (var i = 0, d; d = data[i++];) {
 				newData.push([new Date(d.occurance), d.temperature]);
 			}
-			graph.updateOptions({'file': newData});
+			provideGraphData(newData);
 		}
 	});
 	return false;
 });
 
-$(function() {
-	graph = new Dygraph($("#tempGraph").get(0), [[new Date(),20]], {
+
+function provideGraphData(data) {
+	if (typeof(graph) === 'undefined') {
+		initializeGraph(data);
+	}
+	else {
+		graph.updateOptions({'file': data});
+	}
+}
+
+function initializeGraph(data) {
+	graph = new Dygraph($("#tempGraph").get(0), data, {
 		drawPoints: true,
 		rollPeriod: 10,
 		showRoller: true,
 		labels: ['Temperature', 'Occurance']
 	});
-});
+}
