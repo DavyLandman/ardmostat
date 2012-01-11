@@ -40,10 +40,20 @@ static StateMachineAction waitingForNextRound() {
 }
 
 
+static double collectTemperature() {
+  double tempTotal = 0.0;
+  for (int i = 0; i < 10; i++ ) {
+    double temp = Thermister(analogRead(0));
+    tempTotal += temp;
+    delay(10);
+  }
+  return tempTotal / 10;
+}
+
 static word sendTemperatureFillRequest(byte fd) {
   dataSend = 1;
   BufferFiller bfill = ether.tcpOffset();
-  double temp = Thermister(analogRead(0));
+  double temp = collectTemperature();
   bfill.emit_raw(reinterpret_cast<char*>(&temp), sizeof temp); 
   return bfill.position();
 }
