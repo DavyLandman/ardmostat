@@ -1,9 +1,11 @@
 #include <math.h>
 #include <EtherCard.h>
+//#define printDebugStuff
 #define StateMachineAction void*
 #define Action(a) reinterpret_cast<void*>(a)
 #define CallAction(a) reinterpret_cast<action>(a)()
 typedef void* (*action)();
+
 
 
 
@@ -54,6 +56,10 @@ static word sendTemperatureFillRequest(byte fd) {
   dataSend = 1;
   BufferFiller bfill = ether.tcpOffset();
   double temp = collectTemperature();
+#ifdef printDebugStuff
+  Serial.println("Sending temp");
+  Serial.println(temp);
+#endif
   bfill.emit_raw(reinterpret_cast<char*>(&temp), sizeof temp); 
   return bfill.position();
 }
@@ -67,22 +73,30 @@ static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, 
 
 static StateMachineAction sendingTemperature() {
   if (sendingStarted == 0) {
+#ifdef printDebugStuff
+    Serial.println("Starting up ethernet controller");
+#endif
     sendingStarted = millis();
     dataSend = 0;
-    ether.powerUp();
-    initEther();
+    //ether.powerUp();
+   // initEther();
     ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
   } 
   else if (dataSend) {
+#ifdef printDebugStuff
+    Serial.println("data was send");
+#endif
     sendingStarted = 0;
-    ether.powerDown();
+   // ether.powerDown();
     return Action(waitingForNextRound);
   } 
-  else if ((millis() - sendingStarted) > 2000) {
+  else if ((millis() - sendingStarted) > 4000) {
     // something went wrong with sending.. lets consider this one failed
+#ifdef printDebugStuff
     Serial.println("Sending failure assumed");
+#endif
     sendingStarted = 0;
-    ether.powerDown();
+    //ether.powerDown();
     return Action(waitingForNextRound);
   }
   longDelay = 0;
