@@ -42,9 +42,8 @@ exports.init = function (app) {
 			function (temps) {
 				if (temps != null) {
 					result = [];
-					for (var tIndex = 0; tIndex < temps.length; tIndex++) {
-						t = temps[tIndex];
-						result.push({ "temperature" : t.temperature, "occurance" : t.occurance});
+					for (var tIndex = 0, t; t = temps[tIndex++];) {
+						result.push({ temperature: t.temperature, occurance: t.occurance});
 					}
 					res.json(result);
 				}

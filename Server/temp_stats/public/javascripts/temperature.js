@@ -31,6 +31,6 @@ function initializeGraph(data) {
 		drawPoints: true,
 		rollPeriod: 10,
 		showRoller: true,
-		labels: ['Temperature', 'Occurance']
+		labels: ['Occurance', 'Temperature']
 	});
 }
