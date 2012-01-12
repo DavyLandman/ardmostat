@@ -34,7 +34,7 @@ function toShortDate(d) {
 
 $(function() {
 	$('input[name="startDate"]').val(toShortDate(new Date() - oneDay));
-	$('input[name="stopDate"]').val(toShortDate(new Date() ));
+	$('input[name="stopDate"]').val(toShortDate(new Date() + oneDay ));
 });
 
 
