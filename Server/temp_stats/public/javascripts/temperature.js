@@ -51,8 +51,8 @@ function provideGraphData(data) {
 function initializeGraph(data) {
 	graph = new Dygraph($("#tempGraph").get(0), data, {
 		drawPoints: true,
-		rollPeriod: 10,
-		showRoller: true,
+		rollPeriod: 15,
+		//showRoller: true,
 		labels: ['Occurance', 'Temperature']
 	});
 }
