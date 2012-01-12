@@ -6,9 +6,11 @@ $("#updateTemperatureInfo").click(function (e) {
 		alert("The start date should be before the stop date!");
 	}
 	else {
+		$('#noDataError').hide();
 		$.get("/Temperature/Range/" + startDate.toISOString() + "/"+ stopDate.toISOString(), function (data) {
 			if (typeof(data) === 'string') {
-				alert(data);
+				$('#noDataError').show();
+				$('#noDataError p').text(data);
 			}
 			else {
 				var newData = [];
@@ -35,6 +37,7 @@ function toShortDate(d) {
 $(function() {
 	$('input[name="startDate"]').val(toShortDate(new Date() - oneDay));
 	$('input[name="stopDate"]').val(toShortDate(new Date() + oneDay ));
+	$('#updateTemperatureInfo').click();
 });
 
 
