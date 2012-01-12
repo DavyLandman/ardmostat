@@ -1,18 +1,40 @@
 $("#updateTemperatureInfo").click(function (e) {
 	e.preventDefault();
-	$.get("/Temperature/Range/" + new Date(2011, 11, 30).toJSON() + "/"+ new Date(2011,11,31).toJSON(), function (data) {
-		if (typeof(data) === 'string') {
-			alert(data);
-		}
-		else {
-			var newData = [];
-			for (var i = 0, d; d = data[i++];) {
-				newData.push([new Date(d.occurance), d.temperature]);
+	var startDate =new Date($('input[name="startDate"]').val());
+	var stopDate =new Date($('input[name="stopDate"]').val());
+	if (startDate > stopDate) {
+		alert("The start date should be before the stop date!");
+	}
+	else {
+		$.get("/Temperature/Range/" + startDate.toISOString() + "/"+ stopDate.toISOString(), function (data) {
+			if (typeof(data) === 'string') {
+				alert(data);
 			}
-			provideGraphData(newData);
-		}
-	});
+			else {
+				var newData = [];
+				for (var i = 0, d; d = data[i++];) {
+					newData.push([new Date(d.occurance), d.temperature]);
+				}
+				provideGraphData(newData);
+			}
+		});
+	}
 	return false;
+});
+
+var oneDay = 24*60*60*1000;
+
+function toShortDate(d) {
+	if (typeof(d) !== 'Date') {
+		d = new Date(d);
+	}
+	//return d.getDate() + "-" + (1+d.getMonth()) + "-" + d.getFullYear();
+	return (1+d.getMonth()) + "/" + d.getDate() + "/" + d.getFullYear();
+}
+
+$(function() {
+	$('input[name="startDate"]').val(toShortDate(new Date() - oneDay));
+	$('input[name="stopDate"]').val(toShortDate(new Date() ));
 });
 
 
