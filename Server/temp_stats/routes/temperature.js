@@ -1,4 +1,5 @@
 var orm = require('orm');
+var gzippo = require('gzippo');
 var Temp;
 var db = orm.connect('postgresql://node_temp:report@localhost/Thermostat', function( success, db) {
 	if (!success) {
@@ -29,7 +30,7 @@ exports.init = function (app) {
 		}
 	}
 
-	app.get('/Temperature/Range/:start/:stop', ajaxRequired, function(req, res) {
+	app.get('/Temperature/Range/:start/:stop', ajaxRequired, gzippo.compress(), function(req, res) {
 		if (typeof(Temp) == 'undefined') {
 			console.log("Temp orm object is not defined yet?");
 			res.send("Error with database connection", 500);

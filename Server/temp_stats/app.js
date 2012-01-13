@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var gzippo = require('gzippo');
 
 var app = module.exports = express.createServer();
 
@@ -17,7 +18,9 @@ app.configure(function(){
 	app.use(require('stylus').middleware({ src: __dirname + '/public' }));
 	app.use(app.router);
 	app.use(express.bodyParser());
-	app.use(express.static(__dirname + '/public'));
+	app.use(gzippo.staticGzip(__dirname + '/public'));
+	//app.use(express.static(__dirname + '/public'));
+	app.use(gzippo.compress());
 });
 
 app.configure('development', function(){
