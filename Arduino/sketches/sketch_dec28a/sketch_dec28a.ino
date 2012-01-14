@@ -131,6 +131,8 @@ static StateMachineAction currentState = Action(waitingForNextRound);
 void loop() {
   if (ether.dhcpExpired() && !ether.dhcpSetup())
     Serial.println("DHCP failed");  
+  if (ether.dhcpExpired())
+    ether.dhcpSetup();
   longDelay = 1;
   currentState = CallAction(currentState);
   if (longDelay) {
