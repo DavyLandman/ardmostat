@@ -1,7 +1,8 @@
 var orm = require('orm');
 var gzippo = require('gzippo');
+var connectionString = 'postgresql://node_temp:report@localhost/Thermostat';
 var Temp;
-var db = orm.connect('postgresql://node_temp:report@localhost/Thermostat', function( success, db) {
+var db = orm.connect(connectionString, function( success, db) {
 	if (!success) {
 		console.log('Could not connect the database!\n\t%d:%s', db.number, db.message);
 		return;
@@ -12,6 +13,9 @@ var db = orm.connect('postgresql://node_temp:report@localhost/Thermostat', funct
 	});
 	Temp.sync();
 });
+
+var pg = require('pg');
+
 
 exports.init = function (app) {
 	app.get('/Temperature', function(req, res) {
@@ -36,22 +40,26 @@ exports.init = function (app) {
 			res.send("Error with database connection", 500);
 			return;
 		}
-		Temp.find({ 
-				"occurance >" : new Date(req.params.start).toISOString(),
-				"occurance <" : new Date(req.params.stop).toISOString()
-			}, 
-			function (temps) {
-				if (temps != null) {
-					result = [];
-					for (var tIndex = 0, t; t = temps[tIndex++];) {
-						result.push({ temperature: t.temperature, occurance: t.occurance});
+		pg.connect(connectionString, function (err, client) {
+			client.query('SELECT occurance, temperature FROM temperature WHERE '+
+			' occurance > $1 AND occurance < $2', [new Date(req.params.start), new Date(req.params.stop)], 
+			function (err, result) {
+				if (err) {
+					console.log(err);
+					res.send("Something went wrong", 500);
+					return;
+				}
+				if (result.rowCount > 0) {
+					resArray = [];
+					for (var tIndex = 0, t; t = result.rows[tIndex++];) {
+						resArray.push([t.occurance, t.temperature]);
 					}
-					res.json(result);
+					res.json(resArray);
 				}
 				else {
 					res.send("No temperatures found in this range");
 				}
-			}
-		);
+			});
+		});
 	});
 }

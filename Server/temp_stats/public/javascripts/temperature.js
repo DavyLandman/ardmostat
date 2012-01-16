@@ -13,11 +13,11 @@ $("#updateTemperatureInfo").click(function (e) {
 				$('#noDataError p').text(data);
 			}
 			else {
-				var newData = [];
-				for (var i = 0, d; d = data[i++];) {
-					newData.push([new Date(d.occurance), d.temperature]);
+				// fix format in the array
+				for (var i =0 ; i < data.length; i++) {
+					data[i][0] = new Date(data[i][0]);
 				}
-				provideGraphData(newData);
+				provideGraphData(data);
 			}
 		});
 	}
