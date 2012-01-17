@@ -1,6 +1,7 @@
 #include <math.h>
 #include <EtherCard.h>
 //#define printDebugStuff
+//#define powerDown
 #define StateMachineAction void*
 #define Action(a) reinterpret_cast<void*>(a)
 #define CallAction(a) reinterpret_cast<action>(a)()
@@ -78,8 +79,10 @@ static StateMachineAction sendingTemperature() {
 #endif
     sendingStarted = millis();
     dataSend = 0;
-    //ether.powerUp();
-   // initEther();
+#ifdef powerDown
+    ether.powerUp();
+    initEther();
+#endif
     ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
   } 
   else if (dataSend) {
@@ -87,7 +90,9 @@ static StateMachineAction sendingTemperature() {
     Serial.println("data was send");
 #endif
     sendingStarted = 0;
-   // ether.powerDown();
+#ifdef powerDown    
+    ether.powerDown();
+#endif
     return Action(waitingForNextRound);
   } 
   else if ((millis() - sendingStarted) > 4000) {
@@ -96,7 +101,9 @@ static StateMachineAction sendingTemperature() {
     Serial.println("Sending failure assumed");
 #endif
     sendingStarted = 0;
-    //ether.powerDown();
+#ifdef powerDown    
+    ether.powerDown();
+#endif
     return Action(waitingForNextRound);
   }
   longDelay = 0;
@@ -109,6 +116,10 @@ void initEther() {
 
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
+#ifdef powerDown
+  if (ether.dhcpExpired())
+    ether.dhcpSetup();
+#endif
 }
 
 void setup() {
@@ -131,8 +142,10 @@ static StateMachineAction currentState = Action(waitingForNextRound);
 void loop() {
   if (ether.dhcpExpired() && !ether.dhcpSetup())
     Serial.println("DHCP failed");  
+#ifndef powerDown
   if (ether.dhcpExpired())
     ether.dhcpSetup();
+#endif
   longDelay = 1;
   currentState = CallAction(currentState);
   if (longDelay) {
