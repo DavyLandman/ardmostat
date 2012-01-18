@@ -34,6 +34,8 @@ static unsigned long sendingStarted = 0;
 static const unsigned long roundLoopTime = 60*1000UL;
 static unsigned long roundTime = 0;
 
+static StateMachineAction sendingTemperature();
+
 static StateMachineAction waitingForNextRound() {
   if (roundTime < millis()) {
     roundTime += roundLoopTime;
