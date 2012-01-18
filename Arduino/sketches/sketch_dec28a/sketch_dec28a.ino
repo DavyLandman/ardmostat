@@ -16,7 +16,7 @@ static byte tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
 
 
-double Thermister(int RawADC) {
+static double Thermister(int RawADC) {
 	double Temp;
 	Temp = log(((10240000/RawADC) - 10000));
 	Temp = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * Temp * Temp ))* Temp );
@@ -114,7 +114,8 @@ static StateMachineAction sendingTemperature() {
 	ether.packetLoop(ether.packetReceive());
 	return Action(sendingTemperature); 
 }
-void initEther() {
+
+static void initEther() {
 	if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
 		Serial.println( "Failed to access Ethernet controller");
 
