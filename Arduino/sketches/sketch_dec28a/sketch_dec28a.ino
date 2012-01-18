@@ -28,8 +28,8 @@ double Thermister(int RawADC) {
 byte Ethernet::buffer[700];
 
 
-static int longDelay = 1;
-static int dataSend = 0;
+static byte longDelay = 1;
+static byte dataSend = 0;
 static unsigned long sendingStarted = 0;
 static const unsigned long roundLoopTime = 60*1000UL;
 static unsigned long roundTime = 0;
