@@ -66,8 +66,10 @@ static word sendTemperatureFillRequest(byte fd) {
 }
 
 static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, word len_of_data) {
+#ifdef printDebugStuff
   Serial.println("Strange reply from server?");
   Serial.println(int(statuscode));
+#endif
   dataSend = 1;
   return 0;
 }
