@@ -1,0 +1,29 @@
+digraph states {
+	// temperature measurement
+	WaitingForNextMeasurement -> ShouldStartMeasurement
+	ShouldStartMeasurement -> WaitingForNextMeasurement [label="Time has not passed"]
+	ShouldStartMeasurement -> MeasureTemperature [label="Enough time has passed"]
+	MeasureTemperature -> RequestTemperatureInfo
+	RequestTemperatureInfo  -> WaitingForTemperatureData
+	WaitingForTemperatureData -> TemperatureReceived
+	WaitingForTemperatureData -> WaitingForNextMeasurement [label="Timeout"]
+	TemperatureReceived -> WaitingForNextMeasurement
+
+	// communicate with server
+	WaitingForNextCommunication -> ShouldStartCommunication
+	ShouldStartCommunication -> WaitingForNextCommunication [label="Time has not passed"]
+	ShouldStartCommunication -> StartCommunication [label="Enough time has passed"]
+	StartCommunication -> SendTemperatureData
+	SendTemperatureData -> WaitingForTemperatureSend
+	WaitingForTemperatureSend -> CommunicationError [label="Timeout or	other errors"]
+	WaitingForTemperatureSend -> TemperatureSend
+	TemperatureSend -> RequestSchedule
+	RequestSchedule -> WaitingForScheduleData
+	WaitingForScheduleData -> CommunicationError [label="Timeout or	other errors"]
+	WaitingForScheduleData -> ScheduleReceived
+	ScheduleReceived -> WaitingForNextCommunication
+	CommunicationError -> WaitingForNextCommunication 
+
+	// execute schedule
+
+}
