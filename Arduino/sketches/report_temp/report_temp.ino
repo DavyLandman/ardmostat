@@ -1,26 +1,15 @@
-//#define printDebugStuff
 //#define powerDown
 #include <math.h>
 #include <EtherCard.h>
+#include "debuglog.h"
 #define StateMachineAction void*
 #define Action(a) reinterpret_cast<void*>(a)
 #define CallAction(a) reinterpret_cast<action>(a)()
 typedef void* (*action)();
 
-#ifdef printDebugStuff
-#define printlnDebug(__s1) Serial.println((__p1));
-#define printlnDebug2(__p1, __p2) Serial.println((__p1),(__p2));
-#else
-#define printlnDebug(__s1) 
-#define printlnDebug2(__p1, __p2) 
-#endif
-
-
-
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static byte tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
-
 
 static double Thermister(int RawADC) {
 	double Temp;
@@ -72,20 +61,22 @@ static word sendTemperatureFillRequest(byte fd) {
 }
 
 static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, word len_of_data) {
-	printlnDebug("Strange reply from server?");
-	printlnDebug(int(statuscode));
+	printlnError("Strange reply from server?");
+	printlnError(int(statuscode));
 	dataSend = 1;
 	return 0;
 }
 
 static StateMachineAction sendingTemperature() {
 	if (sendingStarted == 0) {
-		printlnDebug("Starting up ethernet controller");
+		printlnDebug("Starting send to server");
 		sendingStarted = millis();
 		dataSend = 0;
 #ifdef powerDown
+		printlnDebug("Starting up ethernet controller");
 		ether.powerUp();
 		initEther();
+		printlnDebug("Ethernet controller is awake");
 #endif
 		ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
 	} 
@@ -93,15 +84,17 @@ static StateMachineAction sendingTemperature() {
 		printlnDebug("data was send");
 		sendingStarted = 0;
 #ifdef powerDown		
+		printlnDebug("Powering down ethernet controller");
 		ether.powerDown();
 #endif
 		return Action(waitingForNextRound);
 	} 
 	else if ((millis() - sendingStarted) > 4000) {
 		// something went wrong with sending.. lets consider this one failed
-		printlnDebug("Sending failure assumed");
+		printlnError("Sending timeout reached, therefor we assume a sending failure");
 		sendingStarted = 0;
 #ifdef powerDown		
+		printlnDebug("Powering down ethernet controller");
 		ether.powerDown();
 #endif
 		return Action(waitingForNextRound);
@@ -113,27 +106,25 @@ static StateMachineAction sendingTemperature() {
 
 static void initEther() {
 	if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
-		Serial.println( "Failed to access Ethernet controller");
+		printlnError("Failed to access Ethernet controller");
 
 	if (!ether.dhcpSetup())
-		Serial.println("DHCP failed");
-#ifdef powerDown
-	if (ether.dhcpExpired())
-		ether.dhcpSetup();
-#endif
+		printlnError("DHCP failed");
 }
 
 void setup() {
 	Serial.begin(57600);
-	Serial.println("\n[Starting temp logger]");
-
+	printlnInfo("\n[Starting temp logger]");
 	initEther();
 
+#ifdef printInfoStuff
 	ether.printIp("IP: ", ether.myip);
+#endif
 	if (!ether.dnsLookup(servername))
-		Serial.println("DNS failed");
+		printlnError("DNS failed");
+#ifdef printInfoStuff
 	ether.printIp("Server: ", ether.hisip);
-	ether.hisport = 5555;
+#endif
 	roundTime = millis();
 }
 
@@ -142,7 +133,7 @@ static StateMachineAction currentState = Action(waitingForNextRound);
 
 void loop() {
 	if (ether.dhcpExpired() && !ether.dhcpSetup())
-		Serial.println("DHCP failed");		
+		printlnError("DHCP failed");		
 #ifndef powerDown
 	if (ether.dhcpExpired())
 		ether.dhcpSetup();
