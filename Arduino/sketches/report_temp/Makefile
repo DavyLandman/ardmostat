@@ -1,4 +1,4 @@
-report_temp.hex: report_temp.ino
+report_temp.hex: report_temp.ino *.cpp *.h
 	scons EXTRA_LIB=../../libraries
 clean:
 	rm *.hex
