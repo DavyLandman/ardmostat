@@ -1,4 +1,4 @@
-sketch_dec28a.hex: sketch_dec28a.ino
+report_temp.hex: report_temp.ino
 	scons EXTRA_LIB=../../libraries
 clean:
 	rm *.hex
