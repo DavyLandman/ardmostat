@@ -2,10 +2,7 @@
 #include <math.h>
 #include <EtherCard.h>
 #include "debuglog.h"
-#define StateMachineAction void*
-#define Action(a) reinterpret_cast<void*>(a)
-#define CallAction(a) reinterpret_cast<action>(a)()
-typedef void* (*action)();
+#include "statemachine.h"
 
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static byte tempserverip[] = { 192, 168, 1, 12 };
@@ -29,14 +26,14 @@ static unsigned long sendingStarted = 0;
 static const unsigned long roundLoopTime = 60*1000UL;
 static unsigned long roundTime = 0;
 
-static StateMachineAction sendingTemperature();
+static StateMachineChoice sendingTemperature();
 
-static StateMachineAction waitingForNextRound() {
+static StateMachineChoice waitingForNextRound() {
 	if (roundTime < millis()) {
 		roundTime += roundLoopTime;
-		return Action(sendingTemperature);
+		return Choice(sendingTemperature);
 	}
-	return Action(waitingForNextRound);
+	return Choice(waitingForNextRound);
 }
 
 
@@ -67,7 +64,7 @@ static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, 
 	return 0;
 }
 
-static StateMachineAction sendingTemperature() {
+static StateMachineChoice sendingTemperature() {
 	if (sendingStarted == 0) {
 		printlnDebug("Starting send to server");
 		sendingStarted = millis();
@@ -87,7 +84,7 @@ static StateMachineAction sendingTemperature() {
 		printlnDebug("Powering down ethernet controller");
 		ether.powerDown();
 #endif
-		return Action(waitingForNextRound);
+		return Choice(waitingForNextRound);
 	} 
 	else if ((millis() - sendingStarted) > 4000) {
 		// something went wrong with sending.. lets consider this one failed
@@ -97,11 +94,11 @@ static StateMachineAction sendingTemperature() {
 		printlnDebug("Powering down ethernet controller");
 		ether.powerDown();
 #endif
-		return Action(waitingForNextRound);
+		return Choice(waitingForNextRound);
 	}
 	longDelay = 0;
 	ether.packetLoop(ether.packetReceive());
-	return Action(sendingTemperature); 
+	return Choice(sendingTemperature); 
 }
 
 static void initEther() {
@@ -128,7 +125,7 @@ void setup() {
 	roundTime = millis();
 }
 
-static StateMachineAction currentState = Action(waitingForNextRound);
+static StateMachineChoice currentState = Choice(waitingForNextRound);
 
 
 void loop() {
@@ -139,7 +136,7 @@ void loop() {
 		ether.dhcpSetup();
 #endif
 	longDelay = 1;
-	currentState = CallAction(currentState);
+	currentState = CallChoice(currentState);
 	if (longDelay) {
 		delay(1000); 
 	}
