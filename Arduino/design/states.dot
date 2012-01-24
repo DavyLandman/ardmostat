@@ -1,13 +1,20 @@
 digraph states {
 	// temperature measurement
-	WaitingForNextMeasurement -> ShouldStartMeasurement
-	ShouldStartMeasurement -> WaitingForNextMeasurement [label="Time has not passed"]
-	ShouldStartMeasurement -> MeasureTemperature [label="Enough time has passed"]
-	MeasureTemperature -> RequestTemperatureInfo
-	RequestTemperatureInfo  -> WaitingForTemperatureData
-	WaitingForTemperatureData -> TemperatureReceived
-	WaitingForTemperatureData -> WaitingForNextMeasurement [label="Timeout"]
-	TemperatureReceived -> WaitingForNextMeasurement
+	ShouldStartMeasurement -> ShouldStartMeasurement [label="Time has not passed"]
+	ShouldStartMeasurement -> InitializeSmoothing [label="Enough time has passed"]
+	InitializeSmoothing -> ShouldSmooth
+
+	ShouldSmooth -> ShouldSmooth [label="Time has not passed"]
+	ShouldSmooth -> SampleTemperature [label="Time has passed, not enough samples collected"]
+	ShouldSmooth -> FillSharedState [label="Enough samples collected"]
+
+	SampleTemperature -> PrepareNextSmoothStep
+	PrepareNextSmoothStep -> ShouldSmooth
+	FillSharedState -> InitWaitingForNextRound
+	InitWaitingForNextRound -> ShouldStartMeasurement
+
+	ShouldStartMeasurement [shape=diamond]
+	ShouldSmooth [shape=diamond]
 
 	// communicate with server
 	WaitingForNextCommunication -> ShouldStartCommunication
