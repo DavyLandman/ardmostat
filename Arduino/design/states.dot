@@ -17,20 +17,31 @@ digraph states {
 	ShouldSmooth [shape=diamond]
 
 	// communicate with server
-	WaitingForNextCommunication -> ShouldStartCommunication
-	ShouldStartCommunication -> WaitingForNextCommunication [label="Time has not passed"]
-	ShouldStartCommunication -> StartCommunication [label="Enough time has passed"]
-	StartCommunication -> SendTemperatureData
-	SendTemperatureData -> WaitingForTemperatureSend
-	WaitingForTemperatureSend -> CommunicationError [label="Timeout or	other errors"]
-	WaitingForTemperatureSend -> TemperatureSend
-	TemperatureSend -> RequestSchedule
-	RequestSchedule -> WaitingForScheduleData
-	WaitingForScheduleData -> CommunicationError [label="Timeout or	other errors"]
-	WaitingForScheduleData -> ScheduleReceived
-	ScheduleReceived -> WaitingForNextCommunication
-	CommunicationError -> WaitingForNextCommunication 
+	ShouldStartCommunication -> ShouldStartCommunication [label="Time has not passed"]
+	ShouldStartCommunication -> WakeUpEthernet [label="Enough time has passed"]
 
+	WakeUpEthernet -> InitiateConnectionTemperature
+	InitiateConnectionTemperature -> WasConnectionCompletedTemperature
+
+	WasConnectionCompletedTemperature -> RecvSendPackets -> WasConnectionCompletedTemperature [style=dashed]
+	WasConnectionCompletedTemperature -> PowerDownEthernet [label="Connection timeout, something went wrong"]
+	WasConnectionCompletedTemperature -> WasConnectionCompletedTemperature [label="Data not send yet"]
+	WasConnectionCompletedTemperature -> InitiateConnectionSchedule [label="Data was send"]
+
+	InitiateConnectionSchedule -> WasConnectionCompletedSchedule
+
+	WasConnectionCompletedSchedule -> RecvSendPackets -> WasConnectionCompletedSchedule [style=dashed]
+	WasConnectionCompletedSchedule -> PowerDownEthernet [label="Connection timeout, something went wrong"]
+	WasConnectionCompletedSchedule -> WasConnectionCompletedSchedule [label="Data not received yet"]
+	WasConnectionCompletedSchedule -> FillSharedScheduleState [label="Data was received"]
+
+	FillSharedScheduleState -> PowerDownEthernet
+	PowerDownEthernet -> InitNextCommunicationRound -> ShouldStartCommunication
+
+
+	ShouldStartCommunication [shape=diamond]
+	WasConnectionCompletedTemperature [shape=diamond]
+	WasConnectionCompletedSchedule [shape=diamond]
 	// execute schedule
 
 }
