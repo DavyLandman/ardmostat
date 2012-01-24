@@ -14,7 +14,7 @@ char servername[] PROGMEM = "server-download2";
 uint8_t Ethernet::buffer[700];
 
 static SharedState* temperatureInfo;
-static uint8_t dataSend = 0;
+static uint_fast8_t dataSend = 0;
 static uint32_t sendingStarted = 0;
 static uint32_t roundLoopTime;
 static uint32_t roundTime = 0;

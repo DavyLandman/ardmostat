@@ -23,7 +23,7 @@ static uint32_t nextTime;
 
 static StateMachineChoice shouldMeasure();
 
-static uint8_t smoothCount;
+static uint_fast8_t smoothCount;
 static double tempTotal;
 static void initSmoothing() {
 	smoothCount = 0;
