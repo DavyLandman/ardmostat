@@ -2,6 +2,6 @@
 #define SHAREDSTATE_H
 typedef struct {
 	double currentTemperature;
-	int newTemperature;
+	byte newTemperature;
 } SharedState;
 #endif
