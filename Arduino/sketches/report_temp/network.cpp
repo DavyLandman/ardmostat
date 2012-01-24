@@ -13,78 +13,50 @@ char servername[] PROGMEM = "server-download2";
 
 uint8_t Ethernet::buffer[700];
 
-static SharedState* temperatureInfo;
-static uint_fast8_t dataSend = 0;
-static uint32_t sendingStarted = 0;
-static uint32_t roundLoopTime;
-static uint32_t roundTime = 0;
+static SharedState* sharedState;
+static uint_fast8_t temperatureSend;
 
-static StateMachineChoice sendingTemperature();
-
-static StateMachineChoice waitingForNextRound() {
-	if (ether.dhcpExpired() && !ether.dhcpSetup())
-		printlnError("DHCP failed");		
-
-	if (roundTime < millis()) {
-		roundTime += roundLoopTime;
-		return Choice(sendingTemperature);
-	}
-	return Choice(waitingForNextRound);
-}
-static word sendTemperatureFillRequest(byte fd) {
-	dataSend = 1;
+static word serverRequestTemperature(byte fd) {
 	BufferFiller bfill = ether.tcpOffset();
-	double temp = temperatureInfo->currentTemperature; 
-	temperatureInfo->newTemperature = 0;
+	double t = sharedState->currentTemperature; 
+	sharedState->newTemperature = 0;
 	printlnDebug("Sending temp");
-	printlnDebug(temp);
-	bfill.emit_raw(reinterpret_cast<char*>(&temp), sizeof temp); 
+	printlnDebug(t);
+	bfill.emit_raw(reinterpret_cast<char*>(&t), sizeof t); 
+
+	temperatureSend = 1;
 	return bfill.position();
 }
 
-static byte resultFromTemperatureStream(byte fd, byte statuscode, word datapos, word len_of_data) {
+static byte serverReplyTemperature(byte fd, byte statuscode, word datapos, word len_of_data) {
+	// this method should not be called when sending temperature, if it happens,
+	// something strange happend..
 	printlnError("Strange reply from server?");
 	printlnError(int(statuscode));
-	dataSend = 1;
+	temperatureSend = 1;
 	return 0;
 }
 
-static StateMachineChoice sendingTemperature() {
-	if (sendingStarted == 0 && temperatureInfo->newTemperature) {
-		printlnDebug("Starting send to server");
-		sendingStarted = millis();
-		dataSend = 0;
-#ifdef powerDown
-		printlnDebug("Starting up ethernet controller");
-		ether.powerUp();
-		initEther();
-		printlnDebug("Ethernet controller is awake");
-#endif
-		if (ether.dhcpExpired() && !ether.dhcpSetup())
-			printlnError("DHCP failed");		
-		ether.clientTcpReq(resultFromTemperatureStream, sendTemperatureFillRequest, 5555); 
-	} 
-	else if (dataSend) {
-		printlnDebug("data was send");
-		sendingStarted = 0;
-#ifdef powerDown		
-		printlnDebug("Powering down ethernet controller");
-		ether.powerDown();
-#endif
-		return Choice(waitingForNextRound);
-	} 
-	else if ((millis() - sendingStarted) > 4000) {
-		// something went wrong with sending.. lets consider this one failed
-		printlnError("Sending timeout reached, therefor we assume a sending failure");
-		sendingStarted = 0;
-#ifdef powerDown		
-		printlnDebug("Powering down ethernet controller");
-		ether.powerDown();
-#endif
-		return Choice(waitingForNextRound);
+static uint_fast8_t scheduleReceived;
+static word serverRequestSchedule(byte fd) {
+	// we do not send anything to get the schedule
+	BufferFiller bfill = ether.tcpOffset();
+	return bfill.position();
+}
+
+static byte serverReplySchedule(byte fd, byte statuscode, word datapos, word len_of_data) {
+	if (statuscode) {
+		printlnError("Strange reply from server?");
+		printlnError(int(statuscode));
 	}
-	ether.packetLoop(ether.packetReceive());
-	return Choice(sendingTemperature); 
+	else {
+		// do something with data (ether.buffer + datapos)
+	}
+	scheduleReceived = 1;
+	return 0;
+}
+static void fillSharedScheduleState() {
+	// perhaps mark the schedule as ready?
 }
 
 static void initEther() {
@@ -95,10 +67,114 @@ static void initEther() {
 		printlnError("DHCP failed");
 }
 
+static void wakeUpEthernet() {
+#ifdef powerDown
+	printlnDebug("Starting up ethernet controller");
+	ether.powerUp();
+	initEther();
+	printlnDebug("Ethernet controller is awake");
+#endif
+}
 
-StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* sharedState) {
-	temperatureInfo = sharedState;	
-	roundLoopTime = sendEvery;
+static void sleepEthernet() { 
+#ifdef powerDown		
+	printlnDebug("Powering down ethernet controller");
+	ether.powerDown();
+#endif
+}
+
+static const uint32_t sendingTimeout = 4 * 1000UL;
+static uint32_t temperatureSendingStop;
+
+static void initiateConnectionTemperature() {
+	printlnDebug("Starting sending of Temperature");
+	if (ether.dhcpExpired() && !ether.dhcpSetup())
+		printlnError("DHCP failed");		
+
+	temperatureSendingStop = millis() + sendingTimeout;
+	temperatureSend = 0;
+	ether.clientTcpReq(serverReplyTemperature, serverRequestTemperature, 5555); 
+}
+
+static const uint32_t receivingTimeout = 8 * 1000UL;
+static uint32_t scheduleReceivingStop;
+
+static void initiateConnectionSchedule() {
+	printlnDebug("Starting receiving of Schedule");
+	if (ether.dhcpExpired() && !ether.dhcpSetup())
+		printlnError("DHCP failed");		
+
+	scheduleReceivingStop = millis() + receivingTimeout;
+	scheduleReceived = 0;
+	ether.clientTcpReq(serverReplySchedule, serverRequestSchedule, 6666); 
+}
+
+static void recvSendPackets() {
+	ether.packetLoop(ether.packetReceive());
+}
+
+static StateMachineChoice shouldStartCommunication();
+static void initNextCommunicationRound();
+
+static StateMachineChoice wasConnectionCompletedSchedule() {
+	recvSendPackets();
+	if (scheduleReceived) {
+		printlnDebug("Receiving succeeded");
+		fillSharedScheduleState();
+
+		sleepEthernet();
+		initNextCommunicationRound();
+		return Choice(shouldStartCommunication);
+	}
+	else if (millis() > scheduleReceivingStop) {
+		printlnDebug("Receiving timeout?");
+
+		sleepEthernet();
+		initNextCommunicationRound();
+		return Choice(shouldStartCommunication);
+	}
+	else {
+		return Choice(wasConnectionCompletedSchedule);
+	}
+}
+static StateMachineChoice wasConnectionCompletedTemperature() {
+	recvSendPackets();
+	if (temperatureSend) {
+		printlnDebug("Sending succeeded, now retrieving schedule");
+		initiateConnectionSchedule();
+		return Choice(wasConnectionCompletedSchedule);
+	}
+	else if (millis() > temperatureSendingStop) {
+		printlnDebug("Sending timeout?");
+		sleepEthernet();
+		initNextCommunicationRound();
+		return Choice(shouldStartCommunication);
+	}
+	else {
+		return Choice(wasConnectionCompletedTemperature);
+	}
+}
+
+static uint32_t sendStep;
+static uint32_t nextTime;
+
+static void initNextCommunicationRound() {
+	nextTime += sendStep;
+}
+
+static StateMachineChoice shouldStartCommunication() {
+	if (millis() > 	nextTime) {
+		wakeUpEthernet();
+		initiateConnectionTemperature();
+		return Choice(wasConnectionCompletedTemperature);
+	}
+	return Choice(shouldStartCommunication); 
+}
+
+
+StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* psharedState) {
+	sharedState = psharedState;	
+	sendStep = sendEvery;
 
 	initEther();
 
@@ -110,8 +186,8 @@ StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* sharedStat
 #ifdef printInfoStuff
 	ether.printIp("Server: ", ether.hisip);
 #endif
-	roundTime = millis();
+	nextTime = millis();
 
-	return Choice(waitingForNextRound);
+	return Choice(shouldStartCommunication);
 }
 
