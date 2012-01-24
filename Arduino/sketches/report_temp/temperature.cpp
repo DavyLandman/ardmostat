@@ -1,5 +1,6 @@
 #include "temperature.h"
 #include <Arduino.h>
+#include <stdint.h>
 #include <math.h>
 #include "statemachine.h"
 #include "sharedstate.h"
@@ -22,8 +23,8 @@ static unsigned long nextTime;
 
 static StateMachineChoice shouldMeasure();
 
-static byte smoothCount;
-static float tempTotal;
+static uint8_t smoothCount;
+static double tempTotal;
 static void initSmoothing() {
 	smoothCount = 0;
 	tempTotal = 0.0;
