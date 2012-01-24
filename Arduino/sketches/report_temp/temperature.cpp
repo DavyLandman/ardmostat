@@ -16,10 +16,10 @@ static double calculateTemperature(int RawADC) {
 
 
 static SharedState* target;
-static const byte smoothSteps = 10;
-static const unsigned long smoothDelay = 20; //ms
-static unsigned long measureStep;
-static unsigned long nextTime;
+static const uint8_t smoothSteps = 10;
+static const uint8_t smoothDelay = 20; //ms
+static uint32_t measureStep;
+static uint32_t nextTime;
 
 static StateMachineChoice shouldMeasure();
 
@@ -70,7 +70,7 @@ static StateMachineChoice shouldMeasure() {
 	return Choice(shouldMeasure);
 }
 
-StateMachineChoice initializeTemperature(unsigned long measureEvery, SharedState* sharedState) {
+StateMachineChoice initializeTemperature(uint32_t measureEvery, SharedState* sharedState) {
 	target = sharedState;
 	measureStep = measureEvery - (smoothSteps * smoothDelay);
 	nextTime = millis();

@@ -5,7 +5,7 @@
 #include "temperature.h"
 
 
-#include <EtherCard.h> // stupid Arduino and SCons need to see we use the library here..
+#include <EtherCard.h> // stupid Arduino (and SCons) need to see we use the library here..
 
 
 static SharedState sharedState;

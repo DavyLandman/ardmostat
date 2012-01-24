@@ -1,22 +1,23 @@
 #include "network.h"
 //#define powerDown
 #include <Arduino.h> 
+#include <stdint.h>
 #include <EtherCard.h>
 #include "debuglog.h"
 #include "statemachine.h"
 #include "sharedstate.h"
 
-static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
-static byte tempserverip[] = { 192, 168, 1, 12 };
+static uint8_t mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
+static uint8_t tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
 
-byte Ethernet::buffer[700];
+uint8_t Ethernet::buffer[700];
 
 static SharedState* temperatureInfo;
-static byte dataSend = 0;
-static unsigned long sendingStarted = 0;
-static unsigned long roundLoopTime;
-static unsigned long roundTime = 0;
+static uint8_t dataSend = 0;
+static uint32_t sendingStarted = 0;
+static uint32_t roundLoopTime;
+static uint32_t roundTime = 0;
 
 static StateMachineChoice sendingTemperature();
 
@@ -95,7 +96,7 @@ static void initEther() {
 }
 
 
-StateMachineChoice initializeNetwork(unsigned long sendEvery, SharedState* sharedState) {
+StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* sharedState) {
 	temperatureInfo = sharedState;	
 	roundLoopTime = sendEvery;
 

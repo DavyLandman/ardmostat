@@ -1,7 +1,8 @@
 #ifndef SHAREDSTATE_H
 #define SHAREDSTATE_H
+#include <stdint.h>
 typedef struct {
 	double currentTemperature;
-	byte newTemperature;
+	uint8_t newTemperature;
 } SharedState;
 #endif
