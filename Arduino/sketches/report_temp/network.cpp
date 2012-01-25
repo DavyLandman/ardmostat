@@ -193,7 +193,7 @@ StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* psharedSta
 #ifdef printInfoStuff
 	ether.printIp("Server: ", ether.hisip);
 #endif
-	nextTime = millis();
+	nextTime = millis() + sendEvery;
 
 	return Choice(shouldStartCommunication);
 }
