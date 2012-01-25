@@ -15,8 +15,8 @@ static StateMachineChoice ethernetLoop;
 void setup() {
 	Serial.begin(57600);
 	printlnInfo("\n[Starting temp logger]");
-	ethernetLoop = initializeNetwork(60*1000UL, &sharedState);
 	temperatureLoop = initializeTemperature(60*1000UL, &sharedState);
+	ethernetLoop = initializeNetwork(60*1000UL, &sharedState);
 }
 
 void loop() {

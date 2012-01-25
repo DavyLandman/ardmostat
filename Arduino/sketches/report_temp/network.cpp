@@ -1,5 +1,6 @@
 #include "network.h"
 //#define powerDown
+//#define getSchedule
 #include <Arduino.h> 
 #include <stdint.h>
 #include <EtherCard.h>
@@ -11,7 +12,7 @@ static uint8_t mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static uint8_t tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
 
-uint8_t Ethernet::buffer[700];
+byte Ethernet::buffer[700];
 
 static SharedState* sharedState;
 static uint_fast8_t temperatureSend;
@@ -140,9 +141,15 @@ static StateMachineChoice wasConnectionCompletedSchedule() {
 static StateMachineChoice wasConnectionCompletedTemperature() {
 	recvSendPackets();
 	if (temperatureSend) {
+#ifdef getSchedule
 		printlnDebug("Sending succeeded, now retrieving schedule");
 		initiateConnectionSchedule();
 		return Choice(wasConnectionCompletedSchedule);
+#else
+		sleepEthernet();
+		initNextCommunicationRound();
+		return Choice(shouldStartCommunication);
+#endif
 	}
 	else if (millis() > temperatureSendingStop) {
 		printlnDebug("Sending timeout?");
