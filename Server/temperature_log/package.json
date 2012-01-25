@@ -1,0 +1,11 @@
+{
+	"name" : "temperature-log"
+	, "version" : "0.1.0"
+	, "private": true
+	, "dependencies" : {
+		"orm" : ">= 0.1.7"
+		, "pg" : ">= 0.6.8"
+	}
+}
+
+
