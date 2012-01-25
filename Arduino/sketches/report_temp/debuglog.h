@@ -13,24 +13,24 @@
 //#define printDebugStuff
 
 #ifdef printInfoStuff
-	#define printlnInfo(__p1) Serial.print("info:   "); Serial.println((__p1));
-	#define printlnInfo2(__p1, __p2) Serial.print("info:   "); Serial.println((__p1),(__p2));
+	#define printlnInfo(__p1) {Serial.print("info:   "); Serial.println((__p1));}
+	#define printlnInfo2(__p1, __p2) {Serial.print("info:   "); Serial.println((__p1),(__p2));}
 #else
 	#define printlnInfo(__p1) 
 	#define printlnInfo2(__p1, __p2) 
 #endif
 
 #ifdef printErrorStuff
-	#define printlnError(__p1) Serial.print("error: "); Serial.println((__p1));
-	#define printlnError2(__p1, __p2) Serial.print("error: "); Serial.println((__p1),(__p2));
+	#define printlnError(__p1) {Serial.print("error: "); Serial.println((__p1));}
+	#define printlnError2(__p1, __p2) {Serial.print("error: "); Serial.println((__p1),(__p2));}
 #else
 	#define printlnError(__p1) 
 	#define printlnError2(__p1, __p2) 
 #endif
 
 #ifdef printDebugStuff
-	#define printlnDebug(__p1) Serial.print("debug: "); Serial.println((__p1));
-	#define printlnDebug2(__p1, __p2) Serial.print("debug: "); Serial.println((__p1),(__p2));
+	#define printlnDebug(__p1) {Serial.print("debug: "); Serial.println((__p1));}
+	#define printlnDebug2(__p1, __p2) {Serial.print("debug: "); Serial.println((__p1),(__p2));}
 #else
 	#define printlnDebug(__p1) 
 	#define printlnDebug2(__p1, __p2) 
