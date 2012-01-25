@@ -1,5 +1,5 @@
 #include "network.h"
-//#define powerDown
+#define POWERDOWN 
 //#define getSchedule
 #include <Arduino.h> 
 #include <stdint.h>
@@ -69,7 +69,7 @@ static void initEther() {
 }
 
 static void wakeUpEthernet() {
-#ifdef powerDown
+#ifdef POWERDOWN
 	printlnDebug("Starting up ethernet controller");
 	ether.powerUp();
 	initEther();
@@ -78,7 +78,7 @@ static void wakeUpEthernet() {
 }
 
 static void sleepEthernet() { 
-#ifdef powerDown		
+#ifdef POWERDOWN		
 	printlnDebug("Powering down ethernet controller");
 	ether.powerDown();
 #endif
