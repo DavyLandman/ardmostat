@@ -1,0 +1,47 @@
+Default lcd:
++----------------+
+|12:20      18.0o
+|C 10o 40%  16.0o
++----------------+
+C == cloudy icon
+oC == degree C icon
+40% == chance of rain
+
+While heating:
++----------------+
+|12:20      18.0o
+|C 10o 40% ^20.0o
++----------------+
+^ == arrow up (heating)
+
+Press button warmer:
++----------------+
+|12:20 ^^^  18.0o
+|unlimited ^16.0o
++----------------+
+it changes the 16.0o with steps of 0.5 degrees
+
+Press button colder:
++----------------+
+|12:20 ^^^  18.0o
+|unlimited ^16.0o
++----------------+
+it changes the 16.0o with steps of 0.5 degrees
+
+Press button +minutes:
++----------------+
+|12:20 ^^^  18.0o
+|5 min     ^16.0o
++----------------+
+it changes the amount of minutes it should warm +5min, starting at 0
+
+Press button -minutes:
++----------------+
+|12:20 ^^^  18.0o
+|10 min    ^16.0o
++----------------+
+it changes the amount of minutes it should warm -5min, if it gets to 0 it will
+revert to unlimited
+
+Press button accept:
+Back to default/heating screen
