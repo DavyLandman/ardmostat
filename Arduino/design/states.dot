@@ -42,6 +42,35 @@ digraph states {
 	ShouldStartCommunication [shape=diamond]
 	WasConnectionCompletedTemperature [shape=diamond]
 	WasConnectionCompletedSchedule [shape=diamond]
-	// execute schedule
+
+	// show screen
+	ShouldScreenWakeUp -> WakeScreen [label="Any button was pressed to wake the screen"]
+	ShouldScreenWakeUp -> ShouldScreenWakeUp [label="Screen remains sleeping"]
+
+	WakeScreen -> DrawScreen
+
+	DrawScreen -> WriteCurrentTime -> IsUpdatingTemperatureFirstLine
+
+	IsUpdatingTemperatureFirstLine -> WriteSpacesOnFirstLine [label="Not updating temperature"]
+	IsUpdatingTemperatureFirstLine -> WriteFireOnFirstLine [label="Updating temperature"]
+	WriteSpacesOnFirstLine -> WriteCurrentTemperature
+	WriteFireOnFirstLine -> WriteCurrentTemperature
+	WriteCurrentTemperature -> WriteEndScheduleLine
+	
+	WriteEndScheduleLine -> IsUpdatingTemperatureSecondLine
+	IsUpdatingTemperatureSecondLine -> WriteCurrentScheduleTimeAndTemperature [label="Not updating temperature"]
+	IsUpdatingTemperatureSecondLine -> WriteNewScheduleTimeAndTemperature [label="Updating temperature"]
+	WriteCurrentScheduleTimeAndTemperature -> ShouldRedraw
+	WriteNewScheduleTimeAndTemperature -> ShouldRedraw
+
+	ShouldRedraw -> DrawScreen [label="Time has passed"]
+	ShouldRedraw -> ShouldRedraw [label="Time has not passed"]
+	ShouldRedraw -> ShouldScreenWakeUp [label="No action for too long, lets sleep"]
+
+
+	ShouldScreenWakeUp [shape=diamond]
+	IsUpdatingTemperatureFirstLine [shape=diamond, style=dashed]
+	IsUpdatingTemperatureSecondLine [shape=diamond, style=dashed]
+	ShouldRedraw [shape=diamond]
 
 }
