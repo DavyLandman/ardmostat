@@ -73,4 +73,22 @@ digraph states {
 	IsUpdatingTemperatureSecondLine [shape=diamond, style=dashed]
 	ShouldRedraw [shape=diamond]
 
+
+	// schedule handler
+	NotHeating -> CheckBaseSchedule
+	CheckBaseSchedule -> NoHeatingCheckCustomSchedule [label="Schedule defines a temperature lower than the current"]
+	CheckBaseSchedule -> HeatingCheckCustomSchedule [label="Schedule defines a temperature higher than the current"]
+
+	NoHeatingCheckCustomSchedule -> NotHeating [label="CustomSchedule defines a temperature lower than the current"]
+	NoHeatingCheckCustomSchedule -> NotHeating [label="CustomSchedule defines nothing for the current time"]
+	NoHeatingCheckCustomSchedule -> Heating [label="CustomSchedule defines a temperature higher than the current"]
+	HeatingCheckCustomSchedule -> NotHeating [label="CustomSchedule defines a temperature lower than the current"]
+	HeatingCheckCustomSchedule -> Heating [label="CustomSchedule defines a temperature higher than the current"]
+	HeatingCheckCustomSchedule -> Heating [label="CustomSchedule defines nothing for the current time"]
+
+	Heating -> CheckBaseSchedule
+
+	CheckBaseSchedule [shape=diamond]
+	NoHeatingCheckCustomSchedule [shape=diamond, style=dashed]
+	HeatingCheckCustomSchedule [shape=diamond, style=dashed]
 }
