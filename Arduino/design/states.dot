@@ -91,4 +91,39 @@ digraph states {
 	CheckBaseSchedule [shape=diamond]
 	NoHeatingCheckCustomSchedule [shape=diamond, style=dashed]
 	HeatingCheckCustomSchedule [shape=diamond, style=dashed]
+
+	// button debouncer
+	CheckPressedButtons -> StartDebounceTimer [label="One or more new buttons are pressed"]
+	CheckPressedButtons -> CheckPressedButtons [label="No new buttons are pressed"]
+	CheckPressedButtons -> SetButtonVariableLow [label="One or more buttons are unpressed"]
+
+	StartDebounceTimer -> IsDebounceTimePassed
+
+	IsDebounceTimePassed -> SetButtonVariableHigh [label="The button pressed is still high"]
+	IsDebounceTimePassed -> IsDebounceTimePassed [label="Time has not passed"]
+	IsDebounceTimePassed -> CheckPressedButtons [label="Button is low after time passed"]
+
+	SetButtonVariableHigh -> CheckPressedButtons
+	SetButtonVariableLow -> CheckPressedButtons
+	
+	CheckPressedButtons [shape=diamond]
+	IsDebounceTimePassed [shape=diamond]
+	
+	// button pressed/held handler
+	HasButtonCheckTimePassed -> HasButtonCheckTimePassed [label="Time has not passed"]
+	HasButtonCheckTimePassed -> CheckNewButtonHigh [label="Time has passed"]
+
+	CheckNewButtonHigh -> CheckButtonsHeldHighTimePassed [label="no new buttons high"]
+	CheckNewButtonHigh -> NewButtonHigh [label="a new button is high"]
+
+	CheckButtonsHeldHighTimePassed -> HasButtonCheckTimePassed [label="button held time not passed"]
+	CheckButtonsHeldHighTimePassed -> FireActionEvent [label="button held time passed"]
+
+	NewButtonHigh -> FireFirstActionEvent -> AddToButtonHeldCollection -> CheckButtonsHeldHighTimePassed
+	FireActionEvent -> HasButtonCheckTimePassed
+
+
+	HasButtonCheckTimePassed [shape=diamond]
+	CheckNewButtonHigh [shape=diamond, style=dashed]
+	CheckButtonsHeldHighTimePassed [shape=diamond, style=dashed]
 }
