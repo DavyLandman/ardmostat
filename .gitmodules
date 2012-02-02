@@ -4,3 +4,6 @@
 [submodule "Server/libraries/bootstrap"]
 	path = Server/libraries/bootstrap
 	url = https://github.com/twitter/bootstrap.git
+[submodule "Arduino/arscons"]
+	path = Arduino/arscons
+	url = https://code.google.com/r/davylandman-arscons/

@@ -1,4 +1,4 @@
-update-libraries: update-ethercard update-bootstrap
+update-libraries: update-ethercard update-bootstrap update-arscons
 
 
 init-submodules:
@@ -13,6 +13,11 @@ update-bootstrap: init-submodules
 	cd Server/libraries/bootstrap
 	git pull
 	cd ../../../
+
+update-arscons: init-submodules
+	cd Arduino/arscons
+	git pull
+	cd ../../
 
 start-db:
 	pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
