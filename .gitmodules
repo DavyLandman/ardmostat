@@ -7,3 +7,6 @@
 [submodule "Arduino/arscons"]
 	path = Arduino/arscons
 	url = https://code.google.com/r/davylandman-arscons/
+[submodule "Arduino/libraries/aeslib"]
+	path = Arduino/libraries/aeslib
+	url = git://github.com/DavyLandman/aeslib.git
