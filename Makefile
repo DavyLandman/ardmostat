@@ -1,4 +1,4 @@
-update-libraries: update-ethercard update-bootstrap update-arscons
+update-libraries: update-ethercard update-bootstrap update-arscons update-aeslib
 
 
 init-submodules:
@@ -8,6 +8,11 @@ update-ethercard: init-submodules
 	cd Arduino/libraries/ethercard
 	git pull
 	cd ../../../
+
+update-aeslib: init-submodules
+	cd Arduino/libraries/aeslib
+	git pull
+	cd ../../
 
 update-bootstrap: init-submodules
 	cd Server/libraries/bootstrap
