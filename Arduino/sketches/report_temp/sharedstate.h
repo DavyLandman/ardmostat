@@ -3,6 +3,8 @@
 #include <stdint.h>
 typedef struct {
 	double currentTemperature;
-	uint8_t newTemperature;
+	double currentTargetTemperature;
+	uint8_t currentState;
+	uint32_t lastNonce;
 } SharedState;
 #endif

@@ -4,7 +4,7 @@
 #include "network.h"
 #include "temperature.h"
 
-
+#include <AESLib.h>
 #include <EtherCard.h> // stupid Arduino (and SCons) need to see we use the library here..
 
 

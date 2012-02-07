@@ -4,6 +4,7 @@
 #include <Arduino.h> 
 #include <stdint.h>
 #include <EtherCard.h>
+#include <AESLib.h>
 #include "debuglog.h"
 #include "statemachine.h"
 #include "sharedstate.h"
@@ -11,6 +12,13 @@
 static uint8_t mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static uint8_t tempserverip[] = { 192, 168, 1, 12 };
 char servername[] PROGMEM = "server-download2";
+static const uint8_t encKey[16] = 
+	{ 0xEE, 0xCC, 0x3C, 0x4D,
+	  0x31, 0xF9, 0xB2, 0xDA,
+	  0xBE, 0xEF, 0x37, 0xA2,
+	  0x43, 0x42, 0x55, 0x76
+	};
+
 
 byte Ethernet::buffer[700];
 
@@ -18,13 +26,19 @@ static SharedState* sharedState;
 static uint_fast8_t temperatureSend;
 
 static word serverRequestTemperature(byte fd) {
-	BufferFiller bfill = ether.tcpOffset();
-	double t = sharedState->currentTemperature; 
-	sharedState->newTemperature = 0;
-	printlnDebug("Sending temp");
-	printlnDebug(t);
-	bfill.emit_raw(reinterpret_cast<char*>(&t), sizeof t); 
+	// filling state
+	uint8_t data[16] = {0};
+	data[0] = uint8_t(uint32_t(sharedState->currentTemperature)); // whole part 
+	data[1] = uint8_t(uint32_t(sharedState->currentTemperature * 100) % 100); // fraction part
+	data[2] = sharedState->currentState;
+	*(uint32_t*)(data + (16 - sizeof(uint32_t))) = sharedState->lastNonce;
+	
+	// encrypting the state
+	aes128_enc_single(encKey, data);
+	printlnDebug("Sending encrypted state");
 
+	BufferFiller bfill = ether.tcpOffset();
+	bfill.emit_raw((char*)data, sizeof data); 
 	temperatureSend = 1;
 	return bfill.position();
 }

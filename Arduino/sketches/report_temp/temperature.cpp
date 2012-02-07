@@ -37,7 +37,6 @@ static void sampleTemperature() {
 
 static void fillTarget() {
 	target->currentTemperature = tempTotal / smoothSteps;
-	target->newTemperature = 1;
 }
 
 static void prepareNextSmoothStep() {
