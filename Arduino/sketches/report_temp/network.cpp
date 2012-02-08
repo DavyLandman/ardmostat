@@ -6,8 +6,8 @@
 #include <EtherCard.h>
 #include <AESLib.h>
 #include "debuglog.h"
-#include "statemachine.h"
 #include "sharedstate.h"
+#include "network_init.h"
 
 static uint8_t mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x32 };
 static uint8_t tempserverip[] = { 192, 168, 1, 12 };
@@ -24,6 +24,10 @@ byte Ethernet::buffer[700];
 
 static SharedState* sharedState;
 static uint_fast8_t temperatureSend;
+
+uint_fast8_t hasTemperatureBeenSend() {
+	return temperatureSend;
+}
 
 static word serverRequestTemperature(byte fd) {
 	// filling state
@@ -52,11 +56,17 @@ static byte serverReplyTemperature(byte fd, byte statuscode, word datapos, word 
 	return 0;
 }
 
-static uint_fast8_t scheduleReceived;
 static word serverRequestSchedule(byte fd) {
 	// we do not send anything to get the schedule
 	BufferFiller bfill = ether.tcpOffset();
 	return bfill.position();
+}
+
+
+static uint_fast8_t scheduleReceived;
+
+uint_fast8_t hasScheduleBeenRecevied() {
+	return scheduleReceived;
 }
 
 static byte serverReplySchedule(byte fd, byte statuscode, word datapos, word len_of_data) {
@@ -70,7 +80,7 @@ static byte serverReplySchedule(byte fd, byte statuscode, word datapos, word len
 	scheduleReceived = 1;
 	return 0;
 }
-static void fillSharedScheduleState() {
+void fillSharedScheduleState() {
 	// perhaps mark the schedule as ready?
 }
 
@@ -82,7 +92,7 @@ static void initEther() {
 		printlnError("DHCP failed");
 }
 
-static void wakeUpEthernet() {
+void wakeUpEthernet() {
 #ifdef POWERDOWN
 	printlnDebug("Starting up ethernet controller");
 	ether.powerUp();
@@ -91,7 +101,7 @@ static void wakeUpEthernet() {
 #endif
 }
 
-static void sleepEthernet() { 
+void sleepEthernet() { 
 #ifdef POWERDOWN		
 	printlnDebug("Powering down ethernet controller");
 	ether.powerDown();
@@ -101,20 +111,22 @@ static void sleepEthernet() {
 static const uint32_t sendingTimeout = 4 * 1000UL;
 static uint32_t temperatureSendingStop;
 
-static void initiateConnectionTemperature() {
+void initiateConnectionTemperature() {
 	printlnDebug("Starting sending of Temperature");
 	if (ether.dhcpExpired() && !ether.dhcpSetup())
 		printlnError("DHCP failed");		
-
 	temperatureSendingStop = millis() + sendingTimeout;
 	temperatureSend = 0;
 	ether.clientTcpReq(serverReplyTemperature, serverRequestTemperature, 5555); 
+}
+uint8_t hasTemperatureReceivingTimedOut() {
+	return temperatureSendingStop > 0 && millis() > temperatureSendingStop;
 }
 
 static const uint32_t receivingTimeout = 8 * 1000UL;
 static uint32_t scheduleReceivingStop;
 
-static void initiateConnectionSchedule() {
+void initiateConnectionSchedule() {
 	printlnDebug("Starting receiving of Schedule");
 	if (ether.dhcpExpired() && !ether.dhcpSetup())
 		printlnError("DHCP failed");		
@@ -124,78 +136,29 @@ static void initiateConnectionSchedule() {
 	ether.clientTcpReq(serverReplySchedule, serverRequestSchedule, 6666); 
 }
 
-static void recvSendPackets() {
+uint8_t hasScheduleReceivingTimedOut() {
+	return scheduleReceivingStop > 0 && millis() > scheduleReceivingStop;
+}
+
+void recvSendPackets() {
 	ether.packetLoop(ether.packetReceive());
-}
-
-static StateMachineChoice shouldStartCommunication();
-static void initNextCommunicationRound();
-
-static StateMachineChoice wasConnectionCompletedSchedule() {
-	recvSendPackets();
-	if (scheduleReceived) {
-		printlnDebug("Receiving succeeded");
-		fillSharedScheduleState();
-
-		sleepEthernet();
-		initNextCommunicationRound();
-		return Choice(shouldStartCommunication);
-	}
-	else if (millis() > scheduleReceivingStop) {
-		printlnDebug("Receiving timeout?");
-
-		sleepEthernet();
-		initNextCommunicationRound();
-		return Choice(shouldStartCommunication);
-	}
-	else {
-		return Choice(wasConnectionCompletedSchedule);
-	}
-}
-static StateMachineChoice wasConnectionCompletedTemperature() {
-	recvSendPackets();
-	if (temperatureSend) {
-#ifdef getSchedule
-		printlnDebug("Sending succeeded, now retrieving schedule");
-		initiateConnectionSchedule();
-		return Choice(wasConnectionCompletedSchedule);
-#else
-		sleepEthernet();
-		initNextCommunicationRound();
-		return Choice(shouldStartCommunication);
-#endif
-	}
-	else if (millis() > temperatureSendingStop) {
-		printlnDebug("Sending timeout?");
-		sleepEthernet();
-		initNextCommunicationRound();
-		return Choice(shouldStartCommunication);
-	}
-	else {
-		return Choice(wasConnectionCompletedTemperature);
-	}
 }
 
 static uint32_t sendStep;
 static uint32_t nextTime;
 
-static void initNextCommunicationRound() {
+void initNextCommunicationRound() {
 	nextTime += sendStep;
 }
 
-static StateMachineChoice shouldStartCommunication() {
-	if (millis() > 	nextTime) {
-		wakeUpEthernet();
-		initiateConnectionTemperature();
-		return Choice(wasConnectionCompletedTemperature);
-	}
-	return Choice(shouldStartCommunication); 
+uint_fast8_t hasWaitRoundPassed() {
+	return millis() > 	nextTime;
 }
 
 
-StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* psharedState) {
-	sharedState = psharedState;	
-	sendStep = sendEvery;
+void initializeNetwork(NetworkInitInformation* initData) {
+	sharedState = initData->sharedState;	
+	sendStep = initData->sendEvery;
 
 	initEther();
 
@@ -207,8 +170,6 @@ StateMachineChoice initializeNetwork(uint32_t sendEvery, SharedState* psharedSta
 #ifdef printInfoStuff
 	ether.printIp("Server: ", ether.hisip);
 #endif
-	nextTime = millis() + sendEvery;
-
-	return Choice(shouldStartCommunication);
+	nextTime = millis() + sendStep;
 }
 
