@@ -19,6 +19,18 @@ static const uint8_t encKey[16] =
 	  0x43, 0x42, 0x55, 0x76
 	};
 
+static const uint8_t hexLookup[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+// an inplace conversion to hexadecimal. this makes the assumption the toConvert
+// pointer contains originalSize * 2 space
+static void toHex_i(uint8_t* toConvert, uint_fast16_t originalSize) {
+	uint8_t* endOri = (toConvert + originalSize) - 1;
+	uint8_t* endHex = endOri + originalSize;
+	while (endOri >= toConvert) {
+		*endHex-- = hexLookup[(*endOri) & 0x0F];
+		*endHex-- = hexLookup[(*endOri) >> 4];
+		endOri--;
+	}
+}
 
 byte Ethernet::buffer[700];
 
@@ -31,7 +43,7 @@ uint_fast8_t hasTemperatureBeenSend() {
 
 static word serverRequestTemperature(byte fd) {
 	// filling state
-	uint8_t data[16] = {0};
+	uint8_t data[32] = {0}; // 16 bytes block for encryption, which have to be send in hex
 	data[0] = uint8_t(uint32_t(sharedState->currentTemperature)); // whole part 
 	data[1] = uint8_t(uint32_t(sharedState->currentTemperature * 100) % 100); // fraction part
 	data[2] = sharedState->currentState;
@@ -39,8 +51,12 @@ static word serverRequestTemperature(byte fd) {
 	
 	// encrypting the state
 	aes128_enc_single(encKey, data);
-	printlnDebug("Sending encrypted state");
 
+	// encoding it as hex for posting to http server
+	toHex_i(data, 16);
+
+
+	printlnDebug("Sending encrypted state");
 	BufferFiller bfill = ether.tcpOffset();
 	bfill.emit_raw((char*)data, sizeof data); 
 	temperatureSend = 1;
