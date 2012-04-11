@@ -36,7 +36,7 @@ byte Ethernet::buffer[700];
 
 
 static uint32_t nextSendTime;
-static SharedStateInfo* sharedState;
+static SharedState sharedState;
 
 
 void Ethernet_DoPowerDownEthernet() {
