@@ -1,5 +1,7 @@
 #include "SharedState.h"
 #include "TemperatureLog.h"
+#include <EtherCard.h>
+#include <AESLib.h>
 
 SharedStateInfo state;
 
