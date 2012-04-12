@@ -17,6 +17,7 @@ struct State {
 #endif
 static void _WaitForTemperatureMeasurement(struct State* sm );
 static void _WaitForSmoothingFinished(struct State* sm );
+static void _WaitForTemperatureReceived(struct State* sm );
 void* SM_Temperature_initialize(SharedState state ) {
 	Temperature_initialize(state );
 	struct State* result = GETSMSTATE(malloc(sizeof(struct State)));
@@ -49,7 +50,7 @@ static void _WaitForTemperatureMeasurement(struct State* sm ) {
 		
 static void _WaitForSmoothingFinished(struct State* sm ) {
 	//pre actions
-	if ((_Temperature_con_ShouldSmooth() && _Temperature_con_EnoughSamplesCollected())) {
+	if (_Temperature_con_EnoughSamplesCollected()) {
 		Temperature_FillSharedState();
 		Temperature_PrepareNextMeasurementRound();
 		sm->sleepable = 1;
@@ -58,6 +59,20 @@ static void _WaitForSmoothingFinished(struct State* sm ) {
 	}
 	
 	if (_Temperature_con_ShouldSmooth()) {
+		Temperature_RequestTemperature();
+		sm->sleepable = 0;
+		sm->nextState = _WaitForTemperatureReceived;
+		return;
+	}
+
+	sm->sleepable = 0;
+	sm->nextState = _WaitForSmoothingFinished;
+	return;
+}
+		
+static void _WaitForTemperatureReceived(struct State* sm ) {
+	//pre actions
+	if (_Temperature_con_TemperatureReady()) {
 		Temperature_SampleTemperature();
 		Temperature_PrepareNextSmoothStep();
 		sm->sleepable = 0;
@@ -66,7 +81,7 @@ static void _WaitForSmoothingFinished(struct State* sm ) {
 	}
 
 	sm->sleepable = 0;
-	sm->nextState = _WaitForSmoothingFinished;
+	sm->nextState = _WaitForTemperatureReceived;
 	return;
 }
 		

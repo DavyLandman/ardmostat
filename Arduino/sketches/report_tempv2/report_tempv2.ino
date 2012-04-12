@@ -2,6 +2,7 @@
 #include "TemperatureLog.h"
 #include <EtherCard.h>
 #include <AESLib.h>
+#include <OneWire.h>
 
 SharedStateInfo state;
 

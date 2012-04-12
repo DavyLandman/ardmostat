@@ -14,10 +14,12 @@ void Temperature_FillSharedState();
 void Temperature_InitializeSmoothing();
 void Temperature_PrepareNextMeasurementRound();
 void Temperature_PrepareNextSmoothStep();
+void Temperature_RequestTemperature();
 void Temperature_SampleTemperature();
 uint8_t _Temperature_con_EnoughSamplesCollected();
 uint8_t _Temperature_con_ShouldSmooth();
 uint8_t _Temperature_con_ShouldStartMeasurement();
+uint8_t _Temperature_con_TemperatureReady();
 #ifdef __cplusplus
 }
 #endif
