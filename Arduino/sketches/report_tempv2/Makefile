@@ -1,4 +1,4 @@
-report_tempv2.hex: report_tempv2.ino *.c *.h
+report_tempv2.hex: report_tempv2.ino *.c *.cpp *.h
 	scons EXTRA_LIB=../../libraries
 
 upload: 
