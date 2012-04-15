@@ -69,7 +69,8 @@ void Temperature_SampleTemperature() {
 	}
 	uint8_t crc = ds.read();
 	if (OneWire::crc8(data, 8) == crc) {
-		lastValidTemp = *((double*)data);
+		int16_t raw = (((uint16_t)data[1]) << 8) | data[0];
+		lastValidTemp = (float)raw *0.0625;
 	}
 	measuredTemperature += lastValidTemp;
 	smoothCount++;
