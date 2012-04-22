@@ -9,7 +9,7 @@
 #define SENDINGEASE 500UL
 
 static uint8_t mymac[] = { 0x74,0x69,0x69, 0xA2, 0xD4, 0x10 };
-char servername[] PROGMEM = "ardmostat-landman.herokuapp.com";
+char servername[] PROGMEM = "argon-stack-1879049447.us-east-1.elb.amazonaws.com";
 char sendTemperatureHeader[] PROGMEM = 
 	"PUT /temperature HTTP/1.1\r\n"
 	"Host: ardmostat-landman.herokuapp.com\r\n"
@@ -90,7 +90,7 @@ static uint32_t temperatureSendingStop;
 void Ethernet_InitializeTemperatureSending() {
 	temperatureSendingStop = millis() + TIMEOUT;
 	temperatureSend = 0;
-	ether.clientTcpReq(serverReplyTemperature, serverRequestTemperature, 5555); 
+	ether.clientTcpReq(serverReplyTemperature, serverRequestTemperature, 80); 
 }
 
 void Ethernet_MarkTimeout() {
@@ -122,8 +122,11 @@ void Ethernet_initialize(SharedState state ) {
 #ifdef printInfoStuff
 	ether.printIp("IP: ", ether.myip);
 #endif
-	if (!ether.dnsLookup(servername))
+	uint8_t tempServer[] = {107,22,181,229};
+	ether.copyIp(ether.hisip, tempServer);
+	/*if (!ether.dnsLookup(servername))
 		printlnError("DNS failed");
+	*/
 #ifdef printInfoStuff
 	ether.printIp("Server: ", ether.hisip);
 #endif

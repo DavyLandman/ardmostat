@@ -10,7 +10,7 @@
  **/
 #define printInfoStuff
 #define printErrorStuff
-//#define printDebugStuff
+#define printDebugStuff
 
 #ifdef printInfoStuff
 	#define printlnInfo(__p1) {Serial.print("info:   "); Serial.println((__p1));}

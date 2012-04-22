@@ -1,12 +1,14 @@
 #include "Temperature.h"
 #include "debuglog.h"
 #include <OneWire.h>
+#include <DallasTemperature.h>
 #define SMOOTHAMOUNT 10
-#define SMOOTHINTERVAL 500UL
+#define SMOOTHINTERVAL 1000UL
 #define INTERVAL (60000UL - (SMOOTHAMOUNT * SMOOTHINTERVAL))
 
-OneWire ds(1);
-static uint8_t sensorAddress[8];
+OneWire ds(2);
+DallasTemperature sensors(&ds);
+DeviceAddress tempDeviceAddress;
 
 static SharedState sharedState;
 static double measuredTemperature;
@@ -15,20 +17,22 @@ static uint32_t nextMeasureTime;
 void Temperature_initialize(SharedState state ) {
 	sharedState = state;
 	nextMeasureTime = millis() + INTERVAL;
-	if (!ds.search(sensorAddress)) {
-		printlnError("Cannot find temperature sensor");
-		ds.reset_search();
+
+	sensors.begin();
+	if (sensors.getAddress(tempDeviceAddress, 0)) {
+		printlnDebug("Found temperature sensor.");
+		sensors.setResolution(tempDeviceAddress, 12);
+		sensors.setWaitForConversion(false); 
 	}
-	else if (OneWire::crc8(sensorAddress, 7) != sensorAddress[7]) {
-		printlnError("Invalid temperature sensor address found");
-	}
-	else if (sensorAddress[0] != 0x10) {
-		printlnError("Device is not a DS18S20 family device");
+	else {
+		printlnError("Could not find temperature sensor");
 	}
 }
 
 void Temperature_FillSharedState() {
 	sharedState->currentTemperature = measuredTemperature / SMOOTHAMOUNT;
+	printlnDebug("Temperature: ");
+	printlnDebug(sharedState->currentTemperature);
 }
 
 static int smoothCount;
@@ -49,30 +53,12 @@ void Temperature_PrepareNextSmoothStep() {
 
 static uint32_t sensorReady;
 void Temperature_RequestTemperature() {
-	//ds.skip();
-	ds.reset();
-	ds.select(sensorAddress);
-	ds.write(0x44, 0);
-	sensorReady = millis() + 1000UL;
+	sensors.requestTemperatures();  
+	sensorReady = millis() + 750UL;
 }
 
-static double lastValidTemp = 20.0;
 void Temperature_SampleTemperature() {
-	ds.reset();
-	ds.select(sensorAddress);
-	ds.write(0xBE, 0);
-
-	uint8_t data[8];
-	int i;
-	for (i = 0; i < 8; i++) {
-		data[i] = ds.read();
-	}
-	uint8_t crc = ds.read();
-	if (OneWire::crc8(data, 8) == crc) {
-		int16_t raw = (((uint16_t)data[1]) << 8) | data[0];
-		lastValidTemp = (float)raw *0.0625;
-	}
-	measuredTemperature += lastValidTemp;
+	measuredTemperature += sensors.getTempCByIndex(0);
 	smoothCount++;
 }
 

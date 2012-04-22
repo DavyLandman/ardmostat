@@ -3,6 +3,7 @@
 #include <EtherCard.h>
 #include <AESLib.h>
 #include <OneWire.h>
+#include <DallasTemperature.h>
 
 SharedStateInfo state;
 
